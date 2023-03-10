@@ -156,7 +156,3 @@ async def signup(user: NewUser):
         print("Exception occurred during Signup", e)
         print("User :",user)
         return "something went wrong contact admin"
-
-
-if __name__ == "__main__":
-    uvicorn.run("login:app", port=3000)

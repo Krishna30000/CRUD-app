@@ -8,8 +8,9 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 import uvicorn
 
-from Microservices.wallet import spend
-
+from Microservices.wallet import spend, add
+from Microservices.products import search
+from Authentication.login import *
 from starlette.responses import  JSONResponse
 
 @app.get("/")

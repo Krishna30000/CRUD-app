@@ -1,0 +1,8 @@
+python-jose[cryptography]
+passlib[bcrypt]
+python-jose
+uvicorn
+pandas
+streamlit
+pymongo==4.3.3
+fastapi

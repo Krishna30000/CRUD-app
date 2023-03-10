@@ -4,7 +4,7 @@ from server_app import app
 from fastapi.security.api_key import APIKey
 
 import pickle
-
+from Authentication.login import *
 
 balance = 500
 
@@ -18,7 +18,7 @@ def spend(spent: float, current_user: User = Depends(get_current_active_user) ):
     return response_json
 
 @app.post("/add/",status_code=202)
-def spend(add: float, current_user: User = Depends(get_current_active_user) ):
+def add(add: float, current_user: User = Depends(get_current_active_user) ):
     global balance
     balance = balance+add
     response_json={
