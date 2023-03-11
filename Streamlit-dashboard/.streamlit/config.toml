@@ -1,0 +1,12 @@
+[theme]
+
+primaryColor="#30589A"
+backgroundColor="#ffffff"
+secondaryBackgroundColor="#FAF9F6"
+textColor="#262730"
+font="sans serif"
+
+[server]
+
+# baseUrlPath = "QpiAI.quantumAISolutions.tech"
+port = 5000

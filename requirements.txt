@@ -4,5 +4,6 @@ python-jose
 uvicorn
 pandas
 streamlit
+streamlit-elements==0.1.0
 pymongo==4.3.3
 fastapi
