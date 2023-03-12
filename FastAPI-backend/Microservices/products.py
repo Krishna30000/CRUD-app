@@ -10,11 +10,11 @@ from Authentication.login import *
 # This is a file for product catalogue endpoints 
 
 @app.post("/search/",status_code=202)
-def search(search_key: str, min_price: float, max_price: float, current_user: User = Depends(get_current_active_user)): # user needs to login to use this
+def search(search_key: str, min_price: float, max_price: float, brand: str, current_user: User = Depends(get_current_active_user)): # user needs to login to use this
     client = MongoClient('mongodb://localhost:27017/')
     with client:
         db = client.products_catalogue
-        matched_products = db.products_info.find({ '$and': [{'price': {'$gt': min_price}}, {'price': {'$lt': max_price}}, {'name':{ '$regex' : search_key, '$options' : 'i' }}]})
+        matched_products = db.products_info.find({ '$and': [{'price': {'$gt': min_price}}, {'price': {'$lt': max_price}}, {'name':{ '$regex' : search_key, '$options' : 'i' }}, {'brand': brand}]})
         print(matched_products)
         search_result_dict = dict()
         i = 1

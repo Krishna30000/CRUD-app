@@ -8,22 +8,13 @@ from pydantic import BaseModel
 import uvicorn
 import json
 
+from pymongo import MongoClient
+
 # to get a string like this run:
 # openssl rand -hex 32
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-    }
-}
 
 
 class Token(BaseModel):
@@ -67,14 +58,17 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
+def get_user(username: str):
+    client = MongoClient('mongodb://localhost:27017/')
+        
+    with client:
+        db = client.users
+        user_dict = db.users_info.find_one({'username': username})
         return UserInDB(**user_dict)
 
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+def authenticate_user(username: str, password: str):
+    user = get_user(username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -107,7 +101,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -121,7 +115,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -144,14 +138,29 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
 async def read_own_items(current_user: User = Depends(get_current_active_user)):
     return [{"item_id": "Foo", "owner": current_user.username}]
 
-@app.post("/users/signup")
+@app.post("/users/signup/")
 async def signup(user: NewUser):
     try:
         user = json.loads(user.json())
         user["hashed_password"] = pwd_context.hash(user["password"])
         del user["password"]
-        fake_users_db[user["username"]] = user
-        return "User added successfully"
+        client = MongoClient('mongodb://localhost:27017/')
+        
+        with client:
+            db = client.users
+            is_user = db.users_info.find_one({'username': user['username']})
+            is_email = db.users_info.find_one({'email': user['email']})
+            print(is_user)
+            # db = client.users   
+            if is_user is None and is_email is None:
+                db.users_info.insert_one(user)
+                added_user = db.users_info.find_one({'username': user['username']})
+                return f"{added_user['username']} added successfully"
+            elif is_user:
+                return f"{is_user['username']} already exists"
+            else:
+                return f"{is_email['email']} email already exists"
+    
     except Exception as e:
         print("Exception occurred during Signup", e)
         print("User :",user)
